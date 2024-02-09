@@ -11,7 +11,8 @@ pipeline {
     stage('cleanup old images') {
       steps {
         sh '''
-          ollama rm the-butler:latest the-butler:v0.2
+          ollama rm the-butler:latest || true
+          ollama rm the-butler:v0.2 || true
         '''
       }
     }
