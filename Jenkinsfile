@@ -13,6 +13,8 @@ pipeline {
         sh '''
           ollama rm the-butler:latest || true
           ollama rm the-butler:v0.2 || true
+          ollama rm darinpope/the-butler:latest || true
+          ollama rm darinpope/the-butler:v0.2 || true
         '''
       }
     }
@@ -28,14 +30,16 @@ pipeline {
     }
     stage('check that the model is responding') {
       steps {
-        sh 'ollama run mistral:v0.2 "hi" --verbose'
+        sh '''
+          ollama run mistral:v0.2 "hi" --verbose > mistral-hi.txt
+          cat mistral-hi.txt
+        '''
       }
     }
     stage('build the-butler image') {
       steps {
         sh '''
           ollama create the-butler:latest -f ./Modelfile
-          ollama cp the-butler:latest the-butler:v0.2
         '''
       }
     }
@@ -46,16 +50,44 @@ pipeline {
     }
     stage('check that the-butler is responding') {
       steps {
-        sh 'ollama run the-butler:v0.2 "hi" --verbose'
+        sh '''
+          ollama run the-butler:latest "hi" --verbose > the-butler-hi.txt
+          cat the-butler-hi.txt
+        '''
+      }
+    }
+    stage('put the models into the correct namespace') {
+      steps {
+        sh '''
+          ollama cp the-butler:latest darinpope/the-butler:latest
+          ollama cp the-butler:latest darinpope/the-butler:v0.2
+        '''
+      }
+    }
+    stage('list the models') {
+      steps {
+        sh 'ollama list'
       }
     }
     stage('push the model to Ollama') {
       steps {
         sh '''
-          ollama push the-butler:latest
-          ollama push the-butler:v0.2
+          ollama push darinpope/the-butler:latest
+          ollama push darinpope/the-butler:v0.2
         '''
       }
+    }
+  }
+  post {
+    always {
+      sh '''
+        ollama rm the-butler:latest || true
+        ollama rm the-butler:v0.2 || true
+        ollama rm darinpope/the-butler:latest || true
+        ollama rm darinpope/the-butler:v0.2 || true
+        rm -f the-butler-hi.txt
+        rm -f mistral-hi.txt
+      '''
     }
   }
 }
