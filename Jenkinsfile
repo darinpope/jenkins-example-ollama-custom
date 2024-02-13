@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent { label 'agent2' }
   stages {
     stage('Verify tooling') {
       steps {
